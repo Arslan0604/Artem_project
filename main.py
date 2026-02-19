@@ -47,4 +47,4 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-                   
+# This app is ok you need to deploy to the cloud or my VPS                 
