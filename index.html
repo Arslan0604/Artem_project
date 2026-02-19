@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Bridge</title>
+  <style>
+    :root {
+      --bg: #0b111d;
+      --card: #111a2a;
+      --card-soft: #0e1625;
+      --text: #e6edf8;
+      --muted: #9ba9c1;
+      --accent: #30b0ff;
+      --accent-2: #1e93db;
+      --user: #10253f;
+      --assistant: #1a2437;
+      --danger: #ff7070;
+      --border: #223149;
+      --shadow: 0 16px 44px rgba(1, 7, 18, 0.52);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 10% 0%, #162338 0%, #0b111d 40%, #080d17 100%);
+      min-height: 100vh;
+    }
+
+    .app {
+      max-width: 1120px;
+      margin: 24px auto;
+      padding: 0 16px;
+      display: grid;
+      gap: 16px;
+      grid-template-columns: 280px minmax(0, 1fr);
+    }
+
+    .panel {
+      background: linear-gradient(180deg, var(--card) 0%, var(--card-soft) 100%);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-badge {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: #02101e;
+      background: linear-gradient(140deg, #6ed1ff, #2ca8f4);
+      box-shadow: 0 6px 18px rgba(48, 176, 255, 0.3);
+    }
+
+    .sidebar {
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      height: calc(100vh - 48px);
+      position: sticky;
+      top: 24px;
+    }
+
+    .title {
+      margin: 0;
+      font-size: 19px;
+      letter-spacing: 0.3px;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+      margin: 0;
+    }
+
+    label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    input, textarea, button {
+      font: inherit;
+    }
+
+    input[type="text"], textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      outline: none;
+      color: var(--text);
+      background: #0b1424;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input[type="text"]:focus, textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(48, 176, 255, 0.18);
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 12px;
+      cursor: pointer;
+      color: #fff;
+      background: linear-gradient(135deg, var(--accent), #2f8dff);
+      transition: background 0.2s, transform 0.05s;
+      font-weight: 600;
+    }
+
+    button:hover {
+      background: var(--accent-2);
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    button.secondary {
+      color: var(--text);
+      background: #182339;
+    }
+
+    button.secondary:hover {
+      background: #20304b;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .chat {
+      height: calc(100vh - 48px);
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      overflow: hidden;
+    }
+
+    .chat-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, #121c2f, #0f1828);
+    }
+
+    .chat-box {
+      overflow-y: auto;
+      padding: 14px 16px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      scroll-behavior: smooth;
+    }
+
+    .msg {
+      max-width: min(82%, 780px);
+      padding: 10px 12px;
+      border-radius: 12px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid var(--border);
+      animation: fadeIn 0.2s ease;
+    }
+
+    .msg.user {
+      margin-left: auto;
+      background: var(--user);
+    }
+
+    .msg.assistant {
+      margin-right: auto;
+      background: var(--assistant);
+    }
+
+    .msg .meta {
+      color: var(--muted);
+      font-size: 11px;
+      margin-top: 6px;
+    }
+
+    .composer {
+      border-top: 1px solid var(--border);
+      padding: 12px;
+      background: #0f1828;
+      display: grid;
+      gap: 8px;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 82px;
+      max-height: 240px;
+    }
+
+    .status {
+      min-height: 19px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .status.error {
+      color: var(--danger);
+    }
+
+    .history-list {
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-height: 120px;
+      max-height: 42vh;
+      background: #0b1424;
+    }
+
+    .history-item {
+      width: 100%;
+      text-align: left;
+      color: var(--text);
+      background: #111d31;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .history-item:hover {
+      background: #152540;
+      border-color: #2d4161;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(3px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 930px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar, .chat {
+        height: auto;
+        position: static;
+      }
+
+      .chat {
+        grid-template-rows: auto minmax(300px, 1fr) auto;
+      }
+
+      .history-list {
+        max-height: 220px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="panel sidebar">
+      <div class="brand">
+        <div class="brand-badge">AI</div>
+        <h1 class="title">AI Bridge</h1>
+      </div>
+      <p class="small">Professional web client for your AI API in `main.py`.</p>
+
+      <div>
+        <label for="apiUrl">API base URL</label>
+        <input id="apiUrl" type="text" value="http://localhost:8000" />
+      </div>
+
+      <div class="row">
+        <button id="saveUrlBtn" class="secondary" type="button">Save URL</button>
+        <button id="healthBtn" class="secondary" type="button">Check API</button>
+      </div>
+
+      <div class="row">
+        <button id="loadHistoryBtn" type="button">Load History</button>
+        <button id="clearChatBtn" class="secondary" type="button">Clear Chat</button>
+      </div>
+
+      <p id="sidebarStatus" class="small"></p>
+
+      <label>Saved prompts</label>
+      <div id="historyList" class="history-list"></div>
+    </aside>
+
+    <section class="panel chat">
+      <header class="chat-header">
+        <strong>AI Bridge Console</strong>
+        <p class="small">Send prompt to `POST /requests`. Enter to send, Shift+Enter for newline.</p>
+      </header>
+
+      <main id="chatBox" class="chat-box"></main>
+
+      <footer class="composer">
+        <label for="promptInput">Prompt</label>
+        <textarea id="promptInput" placeholder="Ask anything..."></textarea>
+        <div class="row">
+          <button id="sendBtn" type="button">Send</button>
+          <span id="status" class="status"></span>
+        </div>
+      </footer>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      const STORAGE_KEY = "ai_chat_api_base_url";
+
+      const apiUrlInput = document.getElementById("apiUrl");
+      const saveUrlBtn = document.getElementById("saveUrlBtn");
+      const healthBtn = document.getElementById("healthBtn");
+      const loadHistoryBtn = document.getElementById("loadHistoryBtn");
+      const clearChatBtn = document.getElementById("clearChatBtn");
+      const historyList = document.getElementById("historyList");
+      const chatBox = document.getElementById("chatBox");
+      const promptInput = document.getElementById("promptInput");
+      const sendBtn = document.getElementById("sendBtn");
+      const statusEl = document.getElementById("status");
+      const sidebarStatusEl = document.getElementById("sidebarStatus");
+
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) apiUrlInput.value = stored;
+
+      function getApiBaseUrl() {
+        return apiUrlInput.value.trim().replace(/\/+$/, "");
+      }
+
+      function setStatus(message, isError) {
+        statusEl.textContent = message || "";
+        statusEl.classList.toggle("error", Boolean(isError));
+      }
+
+      function setSidebarStatus(message, isError) {
+        sidebarStatusEl.textContent = message || "";
+        sidebarStatusEl.style.color = isError ? "var(--danger)" : "var(--muted)";
+      }
+
+      function nowText() {
+        return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      }
+
+      function addMessage(role, text) {
+        const item = document.createElement("article");
+        item.className = "msg " + role;
+        item.textContent = text || "(empty)";
+
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.textContent = (role === "user" ? "You" : "Assistant") + " - " + nowText();
+        item.appendChild(meta);
+
+        chatBox.appendChild(item);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
+
+      function setBusy(isBusy) {
+        sendBtn.disabled = isBusy;
+        loadHistoryBtn.disabled = isBusy;
+        healthBtn.disabled = isBusy;
+      }
+
+      async function fetchJson(path, options) {
+        const url = getApiBaseUrl() + path;
+        const res = await fetch(url, options);
+        let data;
+        try {
+          data = await res.json();
+        } catch (err) {
+          data = null;
+        }
+        if (!res.ok) {
+          const details = data && typeof data === "object" ? JSON.stringify(data) : res.statusText;
+          throw new Error("HTTP " + res.status + ": " + details);
+        }
+        return data;
+      }
+
+      async function checkApi() {
+        setSidebarStatus("Checking API...");
+        try {
+          await fetchJson("/requests", { method: "GET" });
+          setSidebarStatus("API is reachable.");
+        } catch (err) {
+          setSidebarStatus("API check failed: " + err.message, true);
+        }
+      }
+
+      async function loadHistory() {
+        setBusy(true);
+        setSidebarStatus("Loading history...");
+        historyList.innerHTML = "";
+
+        try {
+          const rows = await fetchJson("/requests", { method: "GET" });
+          const list = Array.isArray(rows) ? rows : [];
+
+          if (!list.length) {
+            setSidebarStatus("No saved requests for your IP.");
+            return;
+          }
+
+          for (const row of list) {
+            const prompt = row && typeof row.prompt === "string" ? row.prompt : "";
+            const response = row && typeof row.response === "string" ? row.response : "";
+            const title = prompt.slice(0, 90) || "(empty prompt)";
+
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "history-item";
+            btn.title = title;
+            btn.textContent = title;
+            btn.addEventListener("click", () => {
+              addMessage("user", prompt);
+              addMessage("assistant", response);
+            });
+            historyList.appendChild(btn);
+          }
+
+          setSidebarStatus("Loaded " + list.length + " request(s).");
+        } catch (err) {
+          setSidebarStatus(
+            "Load failed. If this page is not served from localhost:8000, CORS may block it. " + err.message,
+            true
+          );
+        } finally {
+          setBusy(false);
+        }
+      }
+
+      async function sendPrompt() {
+        const prompt = promptInput.value.trim();
+        if (!prompt) {
+          setStatus("Enter a prompt first.", true);
+          return;
+        }
+
+        setBusy(true);
+        setStatus("Sending...");
+        addMessage("user", prompt);
+        promptInput.value = "";
+
+        try {
+          const data = await fetchJson("/requests", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt: prompt })
+          });
+
+          const answer = data && typeof data.answer === "string" ? data.answer : JSON.stringify(data);
+          addMessage("assistant", answer);
+          setStatus("Done.");
+          loadHistory();
+        } catch (err) {
+          const failText = "Request failed: " + err.message;
+          addMessage("assistant", failText);
+          setStatus("Request failed.", true);
+        } finally {
+          setBusy(false);
+          promptInput.focus();
+        }
+      }
+
+      saveUrlBtn.addEventListener("click", () => {
+        const value = getApiBaseUrl();
+        localStorage.setItem(STORAGE_KEY, value);
+        setSidebarStatus("Saved URL: " + value);
+      });
+
+      healthBtn.addEventListener("click", checkApi);
+      loadHistoryBtn.addEventListener("click", loadHistory);
+      clearChatBtn.addEventListener("click", () => {
+        chatBox.innerHTML = "";
+        setStatus("");
+      });
+      sendBtn.addEventListener("click", sendPrompt);
+
+      promptInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" && !event.shiftKey) {
+          event.preventDefault();
+          sendPrompt();
+        }
+      });
+
+      setSidebarStatus("Ready.");
+      promptInput.focus();
+      loadHistory();
+    })();
+  </script>
+</body>
+</html>
