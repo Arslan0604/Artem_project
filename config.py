@@ -1,7 +1,7 @@
 
 
 class Config:
-    gemini_api_key = "AIzaSyB7lWSokHlRbgEVpoIJSgTuNmsjsD9G0ws"
+    gemini_api_key = ""
     
     
 config_obj = Config()
